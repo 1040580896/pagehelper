@@ -1,0 +1,386 @@
+# PageHelper集成SpringBoot
+
+# 1、创建项目
+
+## 创建一个springboot项目
+
+## 导入相关依赖
+
+```xml
+<dependencies>
+  <!--thymeleaf-->
+  <dependency>
+    <groupId>org.springframework.boot</groupId>
+    <artifactId>spring-boot-starter-thymeleaf</artifactId>
+  </dependency>
+
+  <!--web-->
+  <dependency>
+    <groupId>org.springframework.boot</groupId>
+    <artifactId>spring-boot-starter-web</artifactId>
+  </dependency>
+
+  <!--数据库驱动-->
+  <dependency>
+    <groupId>mysql</groupId>
+    <artifactId>mysql-connector-java</artifactId>
+    <scope>runtime</scope>
+  </dependency>
+
+  <!--lombok使用-->
+  <dependency>
+    <groupId>org.projectlombok</groupId>
+    <artifactId>lombok</artifactId>
+    <optional>true</optional>
+  </dependency>
+
+  <!--pagehelper-->
+  <!-- 分页插件 -->
+  <dependency>
+    <groupId>com.github.pagehelper</groupId>
+    <artifactId>pagehelper-spring-boot-starter</artifactId>
+    <version>1.2.13</version>
+  </dependency>
+
+  <!--整合mybatis-->
+  <dependency>
+    <groupId>org.mybatis.spring.boot</groupId>
+    <artifactId>mybatis-spring-boot-starter</artifactId>
+    <version>2.1.4</version>
+  </dependency>
+
+  <!--测试-->
+  <dependency>
+    <groupId>org.springframework.boot</groupId>
+    <artifactId>spring-boot-starter-test</artifactId>
+    <scope>test</scope>
+  </dependency>
+
+
+</dependencies>
+```
+
+## 创建目录结构
+
+<img src="https://gitee.com/tang-xiaohang/images/raw/master/typora_imgs/20210911183018.png" alt="image-20210911183017371" style="zoom:50%;" />
+
+## 创建application.yml文件，并添加如下配置
+
+```java
+spring:
+  datasource:
+    url: jdbc:mysql://localhost:3306/pagehelperdemodat?useUnicode=true&characterEncoding=UTF-8
+    username: root
+    password: th123456
+    driver-class-name: com.mysql.cj.jdbc.Driver
+
+  thymeleaf:
+    prefix: classpath:/templates/
+    check-template-location: true
+    suffix: .html
+    mode: HTML
+    encoding: UTF-8
+    cache: false
+
+mybatis:
+  mapper-locations: classpath*:mapper/*.xml
+
+pagehelper:
+  helper-dialect: mysql
+  params: count=countSql
+  reasonable: true
+  support-methods-arguments: true
+```
+
+
+
+# 2、创建数据库
+
+```sql
+CREATE DATABASE pagehelperdemodat;
+
+USE pagehelperdemodat;
+
+CREATE TABLE users(
+    id INT PRIMARY KEY AUTO_INCREMENT COMMENT 'id主键', 
+    username VARCHAR(20) NOT NULL COMMENT '用户名',
+    PASSWORD  VARCHAR(20) NOT NULL COMMENT'用户密码'
+);
+INSERT INTO users (username,PASSWORD) VALUES("小开心1","123456");
+INSERT INTO users (username,PASSWORD) VALUES("小开心2","123456");
+INSERT INTO users (username,PASSWORD) VALUES("小开心3","123456");
+INSERT INTO users (username,PASSWORD) VALUES("小开心4","123456");
+INSERT INTO users (username,PASSWORD) VALUES("小开心5","123456");
+INSERT INTO users (username,PASSWORD) VALUES("小开心6","123456");
+INSERT INTO users (username,PASSWORD) VALUES("小开心7","123456");
+INSERT INTO users (username,PASSWORD) VALUES("小开心8","123456");
+```
+
+
+
+# 3、相关文件内容
+
+## User.java
+
+```java
+package com.xiaokaixin.pagehelper.entity;
+
+import lombok.AllArgsConstructor;
+import lombok.Data;
+
+/**
+ * @Author xiaokaixin
+ * @Date 2021/9/11 18:01
+ * @Version 1.0
+ */
+@Data
+@AllArgsConstructor
+public class User {
+
+    private Integer id;
+    private String username;
+    private String password;
+}
+
+```
+
+
+
+## UserDao.java
+
+```java
+package com.xiaokaixin.pagehelper.dao;
+
+import com.xiaokaixin.pagehelper.entity.User;
+
+import java.util.List;
+
+/**
+ * @Author xiaokaixin
+ * @Date 2021/9/11 18:01
+ * @Version 1.0
+ */
+public interface UserDao {
+
+    // 查询所以用户
+    List<User> getAllUser();
+}
+
+```
+
+
+
+## UserMapper.xml
+
+```xml
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.xiaokaixin.pagehelper.dao.UserDao">
+    <select id="getAllUser" resultType="com.xiaokaixin.pagehelper.entity.User">
+        select * from  users
+    </select>
+</mapper>
+```
+
+
+
+## UserService
+
+```java
+package com.xiaokaixin.pagehelper.service;
+
+import com.xiaokaixin.pagehelper.entity.User;
+
+import java.util.List;
+
+/**
+ * @Author xiaokaixin
+ * @Date 2021/9/11 18:05
+ * @Version 1.0
+ */
+public interface UserService  {
+
+    // 查询所以用户
+    List<User> getAllUser();
+}
+```
+
+
+
+## UserServiceImpl
+
+```java
+package com.xiaokaixin.pagehelper.service.impl;
+
+import com.xiaokaixin.pagehelper.dao.UserDao;
+import com.xiaokaixin.pagehelper.entity.User;
+import com.xiaokaixin.pagehelper.service.UserService;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+
+import java.util.List;
+
+/**
+ * @Author xiaokaixin
+ * @Date 2021/9/11 18:05
+ * @Version 1.0
+ */
+@Service
+public class UserServiceImpl implements UserService {
+
+    @Autowired
+    UserDao userDao;
+
+    @Override
+    public List<User> getAllUser() {
+        return userDao.getAllUser();
+    }
+}
+```
+
+
+
+## UserController
+
+```java
+package com.xiaokaixin.pagehelper.controller;
+
+import com.github.pagehelper.PageHelper;
+import com.github.pagehelper.PageInfo;
+import com.xiaokaixin.pagehelper.entity.User;
+import com.xiaokaixin.pagehelper.service.UserService;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+
+import java.util.List;
+
+/**
+ * @Author xiaokaixin
+ * @Date 2021/9/11 18:08
+ * @Version 1.0
+ */
+@Controller
+public class UserController {
+
+    @Autowired
+    UserService userService;
+
+
+    @GetMapping("/")
+    public String findUser(Model model, @RequestParam(defaultValue = "1",value = "pageNum") Integer pageNum){
+        String orderBy = "id asc";
+        PageHelper.startPage(pageNum,5,orderBy);
+        List<User> list = userService.getAllUser();
+        PageInfo<User> pageInfo = new PageInfo<User>(list);
+        model.addAttribute("pageInfo",pageInfo);
+        return "index";
+    }
+}
+
+```
+
+
+
+# 4、相关参数说明
+
+```java
+//当前页
+ private int pageNum;
+
+ //每页的数量
+ private int pageSize;
+
+ //当前页的数量
+ private int size;
+
+ //当前页展示的数据的起始行
+ private int startRow;
+
+ //当前页展示的数据的结束行
+ private int endRow;
+
+ //总记录数--所需要进行分页的数据条数
+ private long total;
+
+ //总页数
+ private int pages;
+
+ //页面展示的结果集，比如说当前页要展示20条数据，则此list为这20条数据
+ private List<T> list;
+
+ //前一页页码
+ private int prePage;
+
+ //下一页页码
+ private int nextPage;
+
+ //是否为第一页，默认为false，是第一页则设置为true
+ private boolean isFirstPage ;
+
+ //是否为最后一页默认为false，是最后一页则设置为true
+ private boolean isLastPage ;
+
+ //是否有前一页，默认为false，有前一页则设置为true
+ private boolean hasPreviousPage ;
+
+ //是否有下一页，默认为false，有后一页则设置为true
+ private boolean hasNextPage ;
+
+ //导航页码数，所谓导航页码数，就是在页面进行展示的那些1.2.3.4...
+ //比如一共有分为两页数据的话，则将此值设置为2
+ private int navigatePages;
+
+ //所有导航页号，一共有两页的话则为[1,2]
+ private int[] navigatepageNums;
+ //导航条上的第一页页码值
+ private int navigateFirstPage;
+
+ //导航条上的最后一页页码值
+ private int navigateLastPage;
+```
+
+
+
+# 5、index.html
+
+```html
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.w3.org/1999/xhtml">
+<head>
+  <meta charset="UTF-8">
+  <title>分页测试</title>
+</head>
+<body>
+<H3>查询所有用户</H3>
+<table border="1">
+  <tr>
+    <th>id</th>
+    <th>name</th>
+    <th>password</th>
+  </tr>
+  <tr th:each="user:${pageInfo.list}">
+    <td th:text="${user.id}"></td>
+    <td th:text="${user.username}"></td>
+    <td th:text="${user.password}"></td>
+  </tr>
+</table>
+<p>当前 <span th:text="${pageInfo.pageNum}"></span> 页,总 <span th:text="${pageInfo.pages}"></span> 页,共 <span th:text="${pageInfo.total}"></span> 条记录</p>
+<a th:href="@{/}">首页</a>
+<a th:href="@{/(pageNum=${pageInfo.hasPreviousPage}?${pageInfo.prePage}:1)}">上一页</a>
+<a th:href="@{/(pageNum=${pageInfo.hasNextPage}?${pageInfo.nextPage}:${pageInfo.pages})}">下一页</a>
+<a th:href="@{/(pageNum=${pageInfo.pages})}">尾页</a>
+</body>
+</html>
+```
+
+
+
+# 6、最终效果
+
+<img src="/Users/xiaokaixin/TyporaNote/typora-user-images/image-20210911184042784.png" alt="image-20210911184042784" style="zoom:50%;" />
