@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.w3.org/1999/xhtml">
+<head>
+  <meta charset="UTF-8">
+  <title>分页测试</title>
+</head>
+<body>
+<H3>查询所有用户</H3>
+<table border="1">
+  <tr>
+    <th>id</th>
+    <th>name</th>
+    <th>password</th>
+  </tr>
+  <tr th:each="user:${pageInfo.list}">
+    <td th:text="${user.id}"></td>
+    <td th:text="${user.username}"></td>
+    <td th:text="${user.password}"></td>
+  </tr>
+</table>
+<p>当前 <span th:text="${pageInfo.pageNum}"></span> 页,总 <span th:text="${pageInfo.pages}"></span> 页,共 <span th:text="${pageInfo.total}"></span> 条记录</p>
+<a th:href="@{/}">首页</a>
+<a th:href="@{/(pageNum=${pageInfo.hasPreviousPage}?${pageInfo.prePage}:1)}">上一页</a>
+<a th:href="@{/(pageNum=${pageInfo.hasNextPage}?${pageInfo.nextPage}:${pageInfo.pages})}">下一页</a>
+<a th:href="@{/(pageNum=${pageInfo.pages})}">尾页</a>
+</body>
+</html>
